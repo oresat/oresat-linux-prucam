@@ -5,7 +5,7 @@
 
 #define SPI_TRANSFER_BUF_LEN 6
 #define MAX_SPI_FREQ_HZ 44000000
-#define BUS_NUM 0
+#define BUS_NUM 1
 
 static struct spi_device *max2771_dev;
 
@@ -99,4 +99,4 @@ module_exit(prusdr_exit);
 
 MODULE_AUTHOR("PSAS <oresat@pdx.edu>");
 MODULE_DESCRIPTION("MAX2771 GNSS receiver driver");
-MODULE_LICENSE("GPL v2");
+MODULE_LICENSE("GPL");
