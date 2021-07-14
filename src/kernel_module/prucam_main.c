@@ -27,9 +27,9 @@ MODULE_VERSION("0.3.2");
 
 #define DEVICE_NAME     "prucam"    // The device will appear at /dev/prucam 
 #define CLASS_NAME      "pru"       // The device class -- this is a character device driver
-#define ROWS            960
-#define COLS            1280
-#define PIXELS          (ROWS * COLS)
+#define ROWS            1024
+#define COLS            1280 * 2 // 2 bytes / pixel
+#define FRAME_BYTES          (ROWS * COLS)
 #define PRUBASE         0x4a300000
 #define PRUSHAREDRAM    (PRUBASE + 0x10000)
 #define PRUINTC_OFFSET  0x20000
@@ -152,7 +152,7 @@ int pru_probe(struct platform_device* dev) {
      * I am unsure what the ideal flags for this are, but GFP_KERNEL seems to
      * work
      */
-    cpu_addr = dma_alloc_coherent(prucamDevice, PIXELS, &dma_handle, GFP_KERNEL);
+    cpu_addr = dma_alloc_coherent(prucamDevice, FRAME_BYTES, &dma_handle, GFP_KERNEL);
     if(cpu_addr == NULL) {
         printk(KERN_INFO "Failed to allocate memory\n");
         return -1;
@@ -172,8 +172,8 @@ int pru_remove(struct platform_device* dev) {
     // free irqs alloc'd in the probe
     free_irqs();
 
-    dma_free_coherent(prucamDevice, PIXELS, cpu_addr, dma_handle);
-    printk(KERN_INFO "prucam: Freed %d bytes\n", PIXELS); 
+    dma_free_coherent(prucamDevice, FRAME_BYTES, cpu_addr, dma_handle);
+    printk(KERN_INFO "prucam: Freed %d bytes\n", FRAME_BYTES); 
 
     return 0;
 }
@@ -187,9 +187,7 @@ int pru_remove(struct platform_device* dev) {
  * @return returns 0 if successful
  */
 static int __init prucam_init(void) {
-    camera_regs_t *startupRegs = NULL;
-    uint16_t cam_ver = 0;
-    int regDrvr, r;
+    int regDrvr;
 
     printk(KERN_INFO "prucam: Initializing the prucam v1\n");
 
@@ -234,38 +232,8 @@ static int __init prucam_init(void) {
     regDrvr = platform_driver_register(&prudrvr);
     printk(KERN_INFO "prucam: platform driver register returned: %d\n", regDrvr);
 
-    if((r = init_cam_i2c(ar013x_i2c_info)) < 0)
-        printk("i2c init failed\n");
-
-    // init the camera control GPIO
-    if((r = init_cam_gpio())) 
-        return r;
-
-    camera_enable();
-
     // AR0130 datasheet says sleep for a little bit after enabled vregs and clock
     msleep(10);
-
-    // detect camera
-    if((r = read_cam_reg(AR013X_AD_CHIP_VERSION_REG, &cam_ver)) < 0)
-        printk("i2c read camera version failed\n");
-
-    if(cam_ver == 0x2402) {
-        printk(KERN_INFO "AR0130 detected");
-        startupRegs = ar0130_startupRegs;
-    }
-    else if(cam_ver == 0x2406) {
-        printk(KERN_INFO "AR0134 detected");
-        startupRegs = ar0134_startupRegs;
-    }
-    else {
-        printk(KERN_ERR "Uknown camera value: 0x%x", cam_ver);
-    }
-
-    // init camera i2c regs
-    r = init_camera_regs(startupRegs);
-    if(r < 0)
-        printk(KERN_ERR "init regs using i2c failed\n");
 
     printk(KERN_INFO "Init Complete\n");
     return 0;
@@ -273,21 +241,12 @@ static int __init prucam_init(void) {
 
 
 static void __exit prucam_exit(void) {
-    int r;
-
     //unregister platform driver
     platform_driver_unregister(&prudrvr);
 
     device_destroy(prucamClass, MKDEV(majorNumber, 0));     // remove the device
     class_destroy(prucamClass);                             // remove the device class
     unregister_chrdev(majorNumber, DEVICE_NAME);            // unregister the major number
-
-    r = end_cam_i2c();
-    if(r<0)
-        printk("i2c end failed\n");
-
-    // put camera GPIO in good state and free the lines
-    free_cam_gpio();
 
     printk(KERN_INFO "prucam: module exit\n");
 }
@@ -377,7 +336,7 @@ static ssize_t dev_read(
 
     physBase = (char*)cpu_addr;
 
-    err = copy_to_user(buffer, physBase, PIXELS); //TODO use __copy_to_user
+    err = copy_to_user(buffer, physBase, FRAME_BYTES); //TODO use __copy_to_user
     if(err != 0) {
         mutex_unlock(&cam_mtx);
         return -EFAULT;
