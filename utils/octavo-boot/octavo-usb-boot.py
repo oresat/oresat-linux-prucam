@@ -68,7 +68,7 @@ def bootp_server():
 
 
                 # 2. 'AM335x U-Boot SPL' is sent by the uboot SPL and in response we send
-                # the actual uboot image naem
+                # the actual uboot image name
                 elif pkt.vendor_ident.decode() == "AM335x U-Boot SPL":
                         server.bootfile = b'u-boot-restore.img'
         
@@ -77,7 +77,7 @@ def bootp_server():
                 # I don't know why this is, but it doesn't work without it.
                 elif pkt.vendor_ident.decode() == "U-Boot.armv7":
                         server.bootfile = b'u-boot-spl-restore.bin'
-                # return the original bin for unrecognized identifiers
+                # error on unrecognized identifiers
                 else:
                         raise Exception("Unknown vendor identifier: ", pkt.vendor_ident)
 

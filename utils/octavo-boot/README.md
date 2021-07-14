@@ -2,6 +2,7 @@
 This software allows you to flash to the Octavo's eMMC via USB. It is based on
 the guide here: 
 https://octavosystems.com/app_notes/programming-emmc-with-usb/
+
 However, I use python instead of `dhcpd` and `xinetd` so it could be run as
 a standalone script instead of needing to setup multiple services
 
@@ -15,7 +16,7 @@ curl -O https://octavosystems.com/octavosystems.com/wp-content/uploads/2019/02/P
 ```
 $ unzip Programming-eMMC-with-USB-for-OSD335x.zip
 ...
-$ mv eMMC\ Flasher\ Project/ tftpboo
+$ mv eMMC\ Flasher\ Project/ tftpboot
 ```
 
 ## Boot Octavo via USB as USB mass storage
