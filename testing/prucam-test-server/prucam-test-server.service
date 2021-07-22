@@ -6,8 +6,8 @@ Type=simple
 Restart=always
 RestartSec=10s
 # working directory assume debian user and repo in home dir
-WorkingDirectory=/home/debian/oresat-linux-prucam
-ExecStart=/home/debian/oresat-linux-prucam/testing/prucam-test-server/launch-api-server.sh
+WorkingDirectory=/home/oresat/oresat-linux-prucam
+ExecStart=/home/oresat/oresat-linux-prucam/testing/prucam-test-server/launch-api-server.sh
 
 [Install]
 WantedBy=multi-user.target
