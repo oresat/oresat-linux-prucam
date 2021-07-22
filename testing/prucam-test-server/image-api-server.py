@@ -91,6 +91,13 @@ def settings_from_path_params(request, settings, path):
     if param_changed:
         sleep(0.2)
 
+@api.route("/settings", methods = ['PUT'])
+def settings():
+    # set sysfs settings from request params
+    settings_from_path_params(request, ctx_settings, prucam_sysfs_ctx_settings)
+    settings_from_path_params(request, ae_settings, prucam_sysfs_ae_settings)
+    return Response(status=204)
+
 @api.route("/<filename>")
 def get_image(filename):
 
@@ -99,8 +106,8 @@ def get_image(filename):
         return Response()
 
     # set sysfs settings from request params
-    settings_from_path_params(request, ctx_settings, prucam_sysfs_ctx_settings)
-    settings_from_path_params(request, ae_settings, prucam_sysfs_ae_settings)
+    #settings_from_path_params(request, ctx_settings, prucam_sysfs_ctx_settings)
+    #settings_from_path_params(request, ae_settings, prucam_sysfs_ae_settings)
 
     # open up the prucam char device
     fd = os.open(path, os.O_RDWR)
